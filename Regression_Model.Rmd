@@ -1,0 +1,115 @@
+---
+title: "Regression_Model"
+author: "Muneeb Shahid"
+date: "1/18/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Executive Summary
+In this analysis, we are going to study the mtcars data set and answer following questions:
+
+1) Is an automatic or manual transmission better for MPG ?
+2) Quantify the MPG difference between automatic and manual transmissions ?
+
+From our analysis we can show that manual transmission has an MPG 2.93 greater than an automatic transmission hence, manual transmission have more miles per gallon than automatic transmissions. However, we can not be sure about exact quantitative difference as the number of observations in the dataset is very low.
+
+## Reading Dataset
+
+```{r}
+library(datasets)
+data(mtcars)
+```
+
+## Viewing some of the enteries in dataset
+
+```{r}
+head(mtcars)
+```
+
+## Data Conversion
+
+Looking at the above table, our variable of concern is am. It indicates transmission type of a car, 0 for automatic and 1 for manual.
+Converting this variable into factor.Also, we need to convert other categorical value into factor as well.
+
+```{r}
+mtcars$am_factor = as.factor(mtcars$am)
+```
+
+## Exploratory Analysis (Getting mpg average with respect to different transmission types)
+
+```{r}
+aggregate(mpg~am_factor, data = mtcars, mean)
+```
+
+We can see from the above table that there is a signifcant difference between the averages of mpg, suggesting that mpg gets affected by transmission type.
+
+
+
+## Linear Model Analysis
+
+### Overall impact of am variable
+```{r}
+summary(lm(mpg~am, mtcars))
+```
+
+There are two conclusions that can be drawn from above results:
+
+1. The p-value is very small, it supports the results from exploratory data analysis that manual transmission yields around 7 more mpg on average than automatic transmission.
+
+2. Adjusted R-square value suggests that only 33% approx variation can be explained by our model i.e. using only transmission variable. There are other variables in the dataset as well, we should look whether those variables improves this value or not.
+
+## Multivariable model analysis
+
+There are 9 other variables so, trying all of the combinations would take a lot of time and effort. So we will use step function to select the best model for us.
+
+```{r}
+
+# excluding factor variables
+
+summary(step(lm(mpg ~ ., mtcars[c(1:11)]), direction = "both", trace=FALSE))
+```
+
+The best model includes am variable along with the qsec and wt variable. Combining these variables have increased the Adjusted R-square value
+to 0.83 approx which is way better than the one obtained from simple model with am variable only. Residual standard error has also decreased to 2.5 from 4.9. The p-values for all of these variables are also significant. Correlation of these variables can be seen in Appendix - 1
+
+### Comparing impact of manual (1) vs automatic (0) transmission
+```{r}
+summary(lm(mpg~wt + qsec + am_factor, mtcars[c(1:12)]))
+```
+
+## Residual Analysis
+
+Following observations can be made from the Residual plots in Appendix - 2:
+
+1. Residuals vs. Fitted plot confirms the independence due to randomness.
+2. Most of The points of the Normal Q-Q plot are close to the line indicating that the distribution of residuals is normal.
+3. The Scale-Location plot randomness supports the constant variance assumption.
+4. Residuals and Leverage show that most of the points are within 0.5 band hence, no outliers.
+
+
+## Appendix - 1: Correlation plot
+
+```{r}
+pairs(mpg ~ ., data = mtcars[c(1:11)])
+```
+
+## Appendix - 2: Residual Plots
+```{r}
+par(mfrow = c(2, 2))
+plot(lm(mpg ~ am + wt + qsec, mtcars[c(1:11)]))
+```
+
+
+## Conclusion
+
+### Is an automatic or manual transmission better for MPG?
+Based on the simple model and as well as multivariable model we can say that manual transmission have more miles per gallon than automatic transmissions.
+
+### Quantify the MPG difference between automatic and manual transmissions?
+Using wt and qsec along with am, With a p < 0.05 confidence cars with manual transmission have 2.93 times more miles per gallon than automatic transmissions. However, we can not be certain as the dataset has only 32 observations and this may not have been enough to answer this question more clearly.
